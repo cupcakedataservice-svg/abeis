@@ -1,7 +1,7 @@
 import axios from "axios";
 
 const api = axios.create({
-  baseURL: import.meta.env.VITE_API_BASE_URL || "https://abeis-backend.onrender.com",
+  baseURL: import.meta.env.VITE_API_BASE_URL || "https://abeis-backend.onrender.com/api",
 });
 
 // Attach the admin JWT (stored in sessionStorage) to every request automatically.
