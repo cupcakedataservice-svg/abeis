@@ -3,9 +3,21 @@ import { useNavigate } from "react-router-dom";
 import { useSession } from "../context/SessionContext.jsx";
 
 const ASSESSMENTS = [
-  { type: "mcq", title: "MCQ Assessment", desc: "Answer multiple-choice questions while we observe natural interaction patterns." },
-  { type: "coding", title: "Coding Assessment", desc: "Solve one problem independently, then transcribe a given solution exactly." },
-  { type: "typing", title: "Typing Assessment", desc: "Type a plain paragraph, then a paragraph rich in numbers and symbols." },
+  {
+    type: "mcq",
+    title: "MCQ Assessment",
+    desc: "Answer multiple-choice questions while we observe natural interaction patterns.",
+  },
+  {
+    type: "coding",
+    title: "Coding Assessment",
+    desc: "Solve one problem independently, then transcribe a given solution exactly.",
+  },
+  {
+    type: "typing",
+    title: "Typing Assessment",
+    desc: "Type a plain paragraph, then a paragraph rich in numbers and symbols.",
+  },
 ];
 
 export default function HubPage() {
@@ -29,7 +41,9 @@ export default function HubPage() {
         </button>
       </div>
 
-      <h2 className="text-white/70 text-sm uppercase tracking-wide mb-4">Choose an assessment</h2>
+      <h2 className="text-white/70 text-sm uppercase tracking-wide mb-4">
+        Choose an assessment
+      </h2>
       <div className="space-y-4">
         {ASSESSMENTS.map((a) => (
           <button

@@ -103,7 +103,7 @@ export default function CodingAssessmentPage() {
 
       const networkLatencyMs = await sessionTracking.probeNetworkLatency(
         import.meta.env.VITE_API_BASE_URL ||
-          "https://abeis-backend.onrender.com",
+          "https://abeis-backend.onrender.com/api",
       );
       const kb = keyboard.getSummary();
 

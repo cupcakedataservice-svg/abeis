@@ -34,14 +34,22 @@ export default function AdminLoginPage() {
     <div className="min-h-screen flex items-center justify-center px-4">
       <div className="w-full max-w-sm">
         <div className="mb-8 text-center">
-          <p className="text-xs uppercase tracking-[0.2em] text-accent/80 font-medium mb-2">ABEIS</p>
-          <h1 className="font-display text-2xl font-bold">Administrator Login</h1>
-          <p className="text-white/40 mt-2 text-sm">Restricted access — authorised personnel only.</p>
+          <p className="text-xs uppercase tracking-[0.2em] text-accent/80 font-medium mb-2">
+            ABEIS
+          </p>
+          <h1 className="font-display text-2xl font-bold">
+            Administrator Login
+          </h1>
+          <p className="text-white/40 mt-2 text-sm">
+            Restricted access — authorised personnel only.
+          </p>
         </div>
 
         <form onSubmit={handleSubmit} className="card p-6 space-y-4">
           <div>
-            <label className="text-sm text-white/60 mb-1.5 block">Admin ID</label>
+            <label className="text-sm text-white/60 mb-1.5 block">
+              Admin ID
+            </label>
             <input
               className="input-field"
               placeholder="ADMIN001"
@@ -51,7 +59,9 @@ export default function AdminLoginPage() {
             />
           </div>
           <div>
-            <label className="text-sm text-white/60 mb-1.5 block">Password</label>
+            <label className="text-sm text-white/60 mb-1.5 block">
+              Password
+            </label>
             <input
               type="password"
               className="input-field"
@@ -63,10 +73,16 @@ export default function AdminLoginPage() {
           </div>
 
           {error && (
-            <p className="text-red-400 text-sm bg-red-400/10 rounded-lg px-3 py-2">{error}</p>
+            <p className="text-red-400 text-sm bg-red-400/10 rounded-lg px-3 py-2">
+              {error}
+            </p>
           )}
 
-          <button type="submit" className="btn-primary w-full" disabled={loading}>
+          <button
+            type="submit"
+            className="btn-primary w-full"
+            disabled={loading}
+          >
             {loading ? "Signing in…" : "Sign In"}
           </button>
         </form>

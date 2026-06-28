@@ -78,7 +78,8 @@ export default function AdminDashboardPage() {
     if (assessmentType) params.set("assessmentType", assessmentType);
     // Open with token in header is not possible via window.open — use fetch blob instead
     const base =
-      import.meta.env.VITE_API_BASE_URL || "https://abeis-backend.onrender.com";
+      import.meta.env.VITE_API_BASE_URL ||
+      "https://abeis-backend.onrender.com/api";
     fetch(`${base}/admin/export?${params}`, {
       headers: { Authorization: `Bearer ${token}` },
     })
