@@ -6,7 +6,8 @@ import { useMouseTracking } from "../hooks/useMouseTracking.js";
 import { useKeyboardTracking } from "../hooks/useKeyboardTracking.js";
 import { useSessionTracking } from "../hooks/useSessionTracking.js";
 
-const Q1_PROMPT = "Write a function `sumEvens(arr)` that returns the sum of all even numbers in an array.";
+const Q1_PROMPT =
+  "Write a function `sumEvens(arr)` that returns the sum of all even numbers in an array.";
 const Q2_SOLUTION = `function sumEvens(arr) {
   return arr
     .filter((n) => n % 2 === 0)
@@ -101,7 +102,8 @@ export default function CodingAssessmentPage() {
       });
 
       const networkLatencyMs = await sessionTracking.probeNetworkLatency(
-        import.meta.env.VITE_API_BASE_URL || "http://localhost:5000/api"
+        import.meta.env.VITE_API_BASE_URL ||
+          "https://abeis-backend.onrender.com",
       );
       const kb = keyboard.getSummary();
 
@@ -110,17 +112,24 @@ export default function CodingAssessmentPage() {
         keyboard: kb,
         session: {
           ...sessionTracking.getSummary(networkLatencyMs),
-          avgResponseTimeMs: (codingResponses[0].responseTimeMs + codingResponses[1].responseTimeMs) / 2,
+          avgResponseTimeMs:
+            (codingResponses[0].responseTimeMs +
+              codingResponses[1].responseTimeMs) /
+            2,
         },
         coding: {
           copyPasteAttempts: kb.pasteAttempts,
           backspaces: kb.backspaceCount,
         },
         camera: { cameraEnabled: mediaHandle?.cameraPermission === "granted" },
-        screen: { screenRecordingEnabled: mediaHandle?.screenPermission === "granted" },
+        screen: {
+          screenRecordingEnabled: mediaHandle?.screenPermission === "granted",
+        },
       };
 
-      await api.post(`/assessments/${assessment.assessmentId}/complete`, { featureVector });
+      await api.post(`/assessments/${assessment.assessmentId}/complete`, {
+        featureVector,
+      });
 
       if (mediaHandle) {
         await mediaHandle.stopAndUpload({
@@ -133,16 +142,23 @@ export default function CodingAssessmentPage() {
 
       navigate("/complete", { state: { assessmentType: "coding" } });
     } catch (err) {
-      setError(err.response?.data?.message || "Submission failed. Please try again.");
+      setError(
+        err.response?.data?.message || "Submission failed. Please try again.",
+      );
       setSubmitting(false);
     }
   };
 
   return (
     <div className="min-h-screen px-4 py-12 max-w-3xl mx-auto">
-      <h1 className="font-display text-2xl font-bold mb-1">Coding Assessment</h1>
+      <h1 className="font-display text-2xl font-bold mb-1">
+        Coding Assessment
+      </h1>
       <p className="text-white/50 text-sm mb-8">
-        Question {stage} of 2 — {stage === 1 ? "solve independently" : "transcribe the given solution exactly"}
+        Question {stage} of 2 —{" "}
+        {stage === 1
+          ? "solve independently"
+          : "transcribe the given solution exactly"}
       </p>
 
       {error && <p className="text-sm text-red-400 mb-4">{error}</p>}
@@ -158,14 +174,20 @@ export default function CodingAssessmentPage() {
             placeholder="// Write your solution here"
             spellCheck={false}
           />
-          <button onClick={advanceToQ2} disabled={!code1.trim()} className="btn-primary mt-4">
+          <button
+            onClick={advanceToQ2}
+            disabled={!code1.trim()}
+            className="btn-primary mt-4"
+          >
             Next Question
           </button>
         </div>
       ) : (
         <div className="card p-5">
           <p className="text-sm text-white/60 mb-2">Type this exactly:</p>
-          <pre className="bg-black/40 rounded-xl p-4 text-sm font-mono mb-4 whitespace-pre-wrap">{Q2_SOLUTION}</pre>
+          <pre className="bg-black/40 rounded-xl p-4 text-sm font-mono mb-4 whitespace-pre-wrap">
+            {Q2_SOLUTION}
+          </pre>
           <textarea
             value={code2}
             onChange={(e) => setCode2(e.target.value)}
@@ -174,7 +196,11 @@ export default function CodingAssessmentPage() {
             placeholder="Type the solution above here"
             spellCheck={false}
           />
-          <button onClick={handleSubmit} disabled={!code2.trim() || submitting} className="btn-primary mt-4">
+          <button
+            onClick={handleSubmit}
+            disabled={!code2.trim() || submitting}
+            className="btn-primary mt-4"
+          >
             {submitting ? "Submitting…" : "Submit Assessment"}
           </button>
         </div>

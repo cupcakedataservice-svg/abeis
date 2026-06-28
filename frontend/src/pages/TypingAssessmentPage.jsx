@@ -99,8 +99,22 @@ export default function TypingAssessmentPage() {
       const m2 = computeWpmAccuracy(TASK2_TEXT, typed2, t2Time);
 
       const typingResponses = [
-        { taskNumber: 1, sourceText: TASK1_TEXT, typedText: typed1, wpm: m1.wpm, accuracy: m1.accuracy, responseTimeMs: t1Time },
-        { taskNumber: 2, sourceText: TASK2_TEXT, typedText: typed2, wpm: m2.wpm, accuracy: m2.accuracy, responseTimeMs: t2Time },
+        {
+          taskNumber: 1,
+          sourceText: TASK1_TEXT,
+          typedText: typed1,
+          wpm: m1.wpm,
+          accuracy: m1.accuracy,
+          responseTimeMs: t1Time,
+        },
+        {
+          taskNumber: 2,
+          sourceText: TASK2_TEXT,
+          typedText: typed2,
+          wpm: m2.wpm,
+          accuracy: m2.accuracy,
+          responseTimeMs: t2Time,
+        },
       ];
 
       await api.post("/responses", {
@@ -112,7 +126,8 @@ export default function TypingAssessmentPage() {
       });
 
       const networkLatencyMs = await sessionTracking.probeNetworkLatency(
-        import.meta.env.VITE_API_BASE_URL || "http://localhost:5000/api"
+        import.meta.env.VITE_API_BASE_URL ||
+          "https://abeis-backend.onrender.com",
       );
 
       const featureVector = {
@@ -131,10 +146,14 @@ export default function TypingAssessmentPage() {
           task2Accuracy: m2.accuracy,
         },
         camera: { cameraEnabled: mediaHandle?.cameraPermission === "granted" },
-        screen: { screenRecordingEnabled: mediaHandle?.screenPermission === "granted" },
+        screen: {
+          screenRecordingEnabled: mediaHandle?.screenPermission === "granted",
+        },
       };
 
-      await api.post(`/assessments/${assessment.assessmentId}/complete`, { featureVector });
+      await api.post(`/assessments/${assessment.assessmentId}/complete`, {
+        featureVector,
+      });
 
       if (mediaHandle) {
         await mediaHandle.stopAndUpload({
@@ -147,23 +166,32 @@ export default function TypingAssessmentPage() {
 
       navigate("/complete", { state: { assessmentType: "typing" } });
     } catch (err) {
-      setError(err.response?.data?.message || "Submission failed. Please try again.");
+      setError(
+        err.response?.data?.message || "Submission failed. Please try again.",
+      );
       setSubmitting(false);
     }
   };
 
   return (
     <div className="min-h-screen px-4 py-12 max-w-3xl mx-auto">
-      <h1 className="font-display text-2xl font-bold mb-1">Typing Assessment</h1>
+      <h1 className="font-display text-2xl font-bold mb-1">
+        Typing Assessment
+      </h1>
       <p className="text-white/50 text-sm mb-8">
-        Task {stage} of 2 — {stage === 1 ? "type the paragraph naturally" : "type the numbers/symbols paragraph"}
+        Task {stage} of 2 —{" "}
+        {stage === 1
+          ? "type the paragraph naturally"
+          : "type the numbers/symbols paragraph"}
       </p>
 
       {error && <p className="text-sm text-red-400 mb-4">{error}</p>}
 
       {stage === 1 ? (
         <div className="card p-5">
-          <p className="text-white/70 text-sm leading-relaxed mb-4 bg-black/30 rounded-xl p-4">{TASK1_TEXT}</p>
+          <p className="text-white/70 text-sm leading-relaxed mb-4 bg-black/30 rounded-xl p-4">
+            {TASK1_TEXT}
+          </p>
           <textarea
             value={typed1}
             onChange={(e) => setTyped1(e.target.value)}
@@ -171,7 +199,11 @@ export default function TypingAssessmentPage() {
             className="input-field h-32 resize-none"
             placeholder="Start typing here…"
           />
-          <button onClick={advanceToTask2} disabled={!typed1.trim()} className="btn-primary mt-4">
+          <button
+            onClick={advanceToTask2}
+            disabled={!typed1.trim()}
+            className="btn-primary mt-4"
+          >
             Next Task
           </button>
         </div>
@@ -187,7 +219,11 @@ export default function TypingAssessmentPage() {
             className="input-field font-mono h-32 resize-none"
             placeholder="Start typing here…"
           />
-          <button onClick={handleSubmit} disabled={!typed2.trim() || submitting} className="btn-primary mt-4">
+          <button
+            onClick={handleSubmit}
+            disabled={!typed2.trim() || submitting}
+            className="btn-primary mt-4"
+          >
             {submitting ? "Submitting…" : "Submit Assessment"}
           </button>
         </div>

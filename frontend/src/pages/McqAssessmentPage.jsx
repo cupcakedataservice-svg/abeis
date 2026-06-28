@@ -98,7 +98,10 @@ export default function McqAssessmentPage() {
   const handleSelect = (questionId, option, index) => {
     setAnswers((prev) => ({ ...prev, [questionId]: option }));
     if (!questionStartTimes[QUESTIONS[index + 1]?.id] && QUESTIONS[index + 1]) {
-      setQuestionStartTimes((prev) => ({ ...prev, [QUESTIONS[index + 1].id]: Date.now() }));
+      setQuestionStartTimes((prev) => ({
+        ...prev,
+        [QUESTIONS[index + 1].id]: Date.now(),
+      }));
     }
   };
 
@@ -130,7 +133,8 @@ export default function McqAssessmentPage() {
       });
 
       const networkLatencyMs = await sessionTracking.probeNetworkLatency(
-        import.meta.env.VITE_API_BASE_URL || "http://localhost:5000/api"
+        import.meta.env.VITE_API_BASE_URL ||
+          "https://abeis-backend.onrender.com",
       );
 
       const featureVector = {
@@ -139,10 +143,13 @@ export default function McqAssessmentPage() {
         session: {
           ...sessionTracking.getSummary(networkLatencyMs),
           avgResponseTimeMs:
-            mcqResponses.reduce((sum, r) => sum + r.responseTimeMs, 0) / mcqResponses.length,
+            mcqResponses.reduce((sum, r) => sum + r.responseTimeMs, 0) /
+            mcqResponses.length,
         },
         camera: { cameraEnabled: mediaHandle?.cameraPermission === "granted" },
-        screen: { screenRecordingEnabled: mediaHandle?.screenPermission === "granted" },
+        screen: {
+          screenRecordingEnabled: mediaHandle?.screenPermission === "granted",
+        },
       };
 
       await api.post(`/assessments/${assessment.assessmentId}/complete`, {
@@ -161,7 +168,9 @@ export default function McqAssessmentPage() {
 
       navigate("/complete", { state: { assessmentType: "mcq" } });
     } catch (err) {
-      setError(err.response?.data?.message || "Submission failed. Please try again.");
+      setError(
+        err.response?.data?.message || "Submission failed. Please try again.",
+      );
       setSubmitting(false);
     }
   };
@@ -172,7 +181,8 @@ export default function McqAssessmentPage() {
     <div className="min-h-screen px-4 py-12 max-w-2xl mx-auto">
       <h1 className="font-display text-2xl font-bold mb-1">MCQ Assessment</h1>
       <p className="text-white/50 text-sm mb-8">
-        Answer all questions. Your interactions are being recorded as part of this assessment.
+        Answer all questions. Your interactions are being recorded as part of
+        this assessment.
       </p>
 
       {error && <p className="text-sm text-red-400 mb-4">{error}</p>}
