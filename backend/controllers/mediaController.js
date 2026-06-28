@@ -1,6 +1,6 @@
 const asyncHandler = require("express-async-handler");
 const Media = require("../models/Media");
-const { uploadToStorage } = require("../config/imagekit");
+const { uploadToStorage } = require("../config/cloudinary");
 
 // POST /api/media/upload
 // multipart/form-data: file, assessmentId, userId, sessionId, assessmentType, recordingType ('camera'|'screen'), duration
@@ -26,12 +26,12 @@ const uploadRecording = asyncHandler(async (req, res) => {
   const uploadResult = await uploadToStorage(req.file.buffer, fileName, folder);
 
   const recordingMeta = {
-    fileId: uploadResult.fileId,
-    url: uploadResult.url,
-    name: uploadResult.name,
-    size: uploadResult.size,
+    fileId: uploadResult.public_id,
+    url: uploadResult.secure_url,
+    name: uploadResult.public_id.split("/").pop(),
+    size: uploadResult.bytes,
     uploadedAt: new Date(),
-    duration: duration ? Number(duration) : undefined,
+    duration: duration ? Number(duration) : uploadResult.duration,
   };
 
   const update = { userId, sessionId, assessmentType };

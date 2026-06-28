@@ -28,7 +28,7 @@ const STATEMENTS = [
   },
   {
     key: "imagekitAndMongoStorage",
-    text: "I understand that my webcam and screen recordings will be stored securely in ImageKit Cloud Storage, while structured behavioral data will be stored in MongoDB.",
+    text: "I understand that my webcam and screen recordings will be stored securely in Cloudinary Cloud Storage, while structured behavioral data will be stored in MongoDB.",
   },
   {
     key: "baselineUsage",

@@ -1,19 +1,22 @@
 const Media = require("../models/Media");
-const { deleteFromStorage } = require("../config/imagekit");
+const { deleteFromStorage } = require("../config/cloudinary");
 
 /**
  * Whether MongoDB records should still be removed for a user/dataset when
- * one or more of their ImageKit files failed to delete.
+ * one or more of their Cloudinary files failed to delete.
  *
- * Per spec: default is to NOT delete Mongo records when an ImageKit
+ * Per spec: default is to NOT delete Mongo records when a Cloudinary
  * deletion fails, unless this is explicitly turned on.
  */
 function shouldContinueOnFailure() {
-  return process.env.DELETE_MONGO_ON_IMAGEKIT_FAILURE === "true";
+  return (
+    process.env.DELETE_MONGO_ON_STORAGE_DELETE_FAILURE === "true" ||
+    process.env.DELETE_MONGO_ON_IMAGEKIT_FAILURE === "true" // legacy name, kept for backward compatibility
+  );
 }
 
 /**
- * Attempts to delete every ImageKit file referenced by the given Media
+ * Attempts to delete every Cloudinary file referenced by the given Media
  * documents. Never throws — every failure is caught, logged with full
  * context, and returned so the caller can decide what to do next.
  *
@@ -37,22 +40,16 @@ async function deleteImageKitFilesForMedia(mediaRecords) {
       };
 
       try {
+        // deleteFromStorage already treats Cloudinary's "not found" result as
+        // a success (file is already gone, which is the desired end state),
+        // so anything that reaches this catch block is a genuine failure.
         await deleteFromStorage(recording.fileId);
         successes.push(context);
       } catch (err) {
-        // ImageKit returns 404 if the file is already gone — treat that as a
-        // successful cleanup rather than a failure, since the end state
-        // (no orphaned file in ImageKit) is what we actually care about.
-        const status = err?.response?.status || err?.httpStatusCode;
-        if (status === 404) {
-          successes.push(context);
-          continue;
-        }
-
         const message = err?.message || String(err);
         console.error(
-          `[IMAGEKIT_DELETE_FAILED] userId=${context.userId} assessmentId=${context.assessmentId} ` +
-            `fileId=${context.fileId} recordingType=${context.recordingType} error=${message}`
+          `[CLOUDINARY_DELETE_FAILED] userId=${context.userId} assessmentId=${context.assessmentId} ` +
+          `fileId=${context.fileId} recordingType=${context.recordingType} error=${message}`
         );
         failures.push({ ...context, error: message });
       }
@@ -63,7 +60,7 @@ async function deleteImageKitFilesForMedia(mediaRecords) {
 }
 
 /**
- * Deletes every ImageKit file for the given Mongo media filter (e.g. { userId }
+ * Deletes every Cloudinary file for the given Mongo media filter (e.g. { userId }
  * or {} for the entire dataset), respecting DELETE_MONGO_ON_IMAGEKIT_FAILURE.
  *
  * @param {object} mediaFilter - Mongo filter passed to Media.find()
@@ -88,7 +85,7 @@ async function cleanupMediaForFilter(mediaFilter) {
  */
 function buildWarningMessage(failures) {
   if (!failures.length) return "";
-  return ` Warning: ${failures.length} ImageKit file${failures.length === 1 ? "" : "s"} could not be deleted.`;
+  return ` Warning: ${failures.length} Cloudinary file${failures.length === 1 ? "" : "s"} could not be deleted.`;
 }
 
 module.exports = {

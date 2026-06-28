@@ -4,7 +4,7 @@ import api from "../api/client";
 /**
  * Handles requesting webcam + screen permissions, recording both for the
  * duration of an assessment, and uploading the resulting blobs to the
- * backend (which forwards them to ImageKit) on stop.
+ * backend (which forwards them to Cloudinary) on stop.
  */
 export function useMediaRecording() {
   const cameraStreamRef = useRef(null);

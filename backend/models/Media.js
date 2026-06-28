@@ -2,7 +2,7 @@ const mongoose = require("mongoose");
 
 const recordingSchema = new mongoose.Schema(
   {
-    // fileId is mandatory — it's the only handle ImageKit gives us to permanently
+    // fileId is mandatory — it's the only handle Cloudinary gives us to permanently
     // delete this file later (see services/mediaCleanupService.js).
     fileId: { type: String, required: true },
     url: { type: String, required: true },

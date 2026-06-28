@@ -192,7 +192,7 @@ const exportDataset = asyncHandler(async (req, res) => {
 // ─── Deletion helpers ─────────────────────────────────────────────────────────
 
 /**
- * Deletes a single user's ImageKit media (if allowed) and, only if that
+ * Deletes a single user's Cloudinary media (if allowed) and, only if that
  * succeeds (or is explicitly configured to proceed anyway), all of their
  * MongoDB records.
  */
@@ -242,15 +242,15 @@ const deleteUser = asyncHandler(async (req, res) => {
 
   console.log(
     `[ADMIN_DELETE] adminId=${req.admin.adminId} userId=${userId} skipped=${result.skipped} ` +
-      `failures=${result.failures.length} ip=${req.ip} ts=${new Date().toISOString()}`
+    `failures=${result.failures.length} ip=${req.ip} ts=${new Date().toISOString()}`
   );
 
   if (result.skipped) {
     res.status(207); // partial: nothing was deleted because cloud cleanup failed
     return res.json({
       message:
-        "Participant data was NOT deleted because one or more cloud media files could not be removed from ImageKit. " +
-        "Resolve the ImageKit issue and try again, or enable DELETE_MONGO_ON_IMAGEKIT_FAILURE to force deletion anyway.",
+        "Participant data was NOT deleted because one or more cloud media files could not be removed from Cloudinary. " +
+        "Resolve the Cloudinary issue and try again, or enable DELETE_MONGO_ON_STORAGE_DELETE_FAILURE to force deletion anyway.",
       deleted: [],
       failures: result.failures,
     });
@@ -296,12 +296,12 @@ const deleteSelectedUsers = asyncHandler(async (req, res) => {
 
   console.log(
     `[ADMIN_DELETE_SELECTED] adminId=${req.admin.adminId} deleted=${deleted.join(",")} ` +
-      `skipped=${skipped.join(",")} failures=${allFailures.length} ip=${req.ip} ts=${new Date().toISOString()}`
+    `skipped=${skipped.join(",")} failures=${allFailures.length} ip=${req.ip} ts=${new Date().toISOString()}`
   );
 
   let message = `${deleted.length} participant(s) and all associated behavioral data have been permanently deleted.`;
   if (skipped.length) {
-    message += ` ${skipped.length} participant(s) were NOT deleted because their cloud media files could not be removed from ImageKit.`;
+    message += ` ${skipped.length} participant(s) were NOT deleted because their cloud media files could not be removed from Cloudinary.`;
   }
   message += buildWarningMessage(allFailures);
 
@@ -321,13 +321,13 @@ const clearAllData = asyncHandler(async (req, res) => {
   if (!canDeleteMongo) {
     console.log(
       `[ADMIN_CLEAR_ALL] adminId=${req.admin.adminId} aborted=true failures=${failures.length} ` +
-        `ip=${req.ip} ts=${new Date().toISOString()}`
+      `ip=${req.ip} ts=${new Date().toISOString()}`
     );
     res.status(207);
     return res.json({
       message:
-        "Dataset was NOT cleared because one or more cloud media files could not be removed from ImageKit. " +
-        "Resolve the ImageKit issue and try again, or enable DELETE_MONGO_ON_IMAGEKIT_FAILURE to force deletion anyway.",
+        "Dataset was NOT cleared because one or more cloud media files could not be removed from Cloudinary. " +
+        "Resolve the Cloudinary issue and try again, or enable DELETE_MONGO_ON_STORAGE_DELETE_FAILURE to force deletion anyway.",
       failures,
     });
   }
@@ -344,10 +344,10 @@ const clearAllData = asyncHandler(async (req, res) => {
 
   console.log(
     `[ADMIN_CLEAR_ALL] adminId=${req.admin.adminId} ip=${req.ip} ts=${new Date().toISOString()} ` +
-      `users=${r7.deletedCount} assessments=${r6.deletedCount} failures=${failures.length}`
+    `users=${r7.deletedCount} assessments=${r6.deletedCount} failures=${failures.length}`
   );
 
-  const message = `All participant data has been permanently deleted from MongoDB and ImageKit.${buildWarningMessage(
+  const message = `All participant data has been permanently deleted from MongoDB and Cloudinary.${buildWarningMessage(
     failures
   )}`;
 
