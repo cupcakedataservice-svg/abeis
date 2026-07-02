@@ -15,7 +15,7 @@ const responseRoutes = require("./routes/responseRoutes");
 const mediaRoutes = require("./routes/mediaRoutes");
 const baselineRoutes = require("./routes/baselineRoutes");
 const adminRoutes = require("./routes/adminRoutes");
-
+const featureExtractionRoutes = require("./routes/featureExtractionRoutes");
 connectDB();
 
 const app = express();
@@ -44,7 +44,7 @@ app.use("/api/responses", responseRoutes);
 app.use("/api/media", mediaRoutes);
 app.use("/api/baselines", baselineRoutes);
 app.use("/api/admin", adminRoutes);
-
+app.use("/api/extraction", featureExtractionRoutes);
 app.use(notFound);
 app.use(errorHandler);
 

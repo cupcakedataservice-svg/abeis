@@ -50,3 +50,26 @@ coverage/
 backend/uploads/
 backend/tmp/
 *.webm
+
+# ── Python Virtual Environment ────────────────────────────────────────────────
+backend/python-worker/venv/
+backend/python-worker/.venv/
+
+# ── Python Cache ──────────────────────────────────────────────────────────────
+backend/python-worker/__pycache__/
+**/__pycache__/
+
+*.pyc
+*.pyo
+*.pyd
+
+# ── Python Temporary Files ────────────────────────────────────────────────────
+backend/python-worker/temp/
+backend/python-worker/tmp/
+
+# ── Jupyter (if used later) ───────────────────────────────────────────────────
+.ipynb_checkpoints/
+
+# ── Python Tooling ────────────────────────────────────────────────────────────
+.pytest_cache/
+.mypy_cache/

@@ -3,6 +3,9 @@ const { v4: uuidv4 } = require("uuid");
 const Assessment = require("../models/Assessment");
 const BehavioralFeature = require("../models/BehavioralFeature");
 const AssessmentResponse = require("../models/AssessmentResponse");
+const {
+  enqueueExtraction
+} = require("../services/featureExtractionService");
 const Consent = require("../models/Consent");
 const { updateBaselineAfterAssessment, compareAgainstBaseline } = require("../services/baselineService");
 
@@ -68,7 +71,6 @@ const completeAssessment = asyncHandler(async (req, res) => {
       rawEvents: rawEvents || undefined,
     });
 
-    // Compare against existing baseline BEFORE updating it with this session's data.
     deviation = await compareAgainstBaseline({
       userId: assessment.userId,
       assessmentType: assessment.assessmentType,
@@ -82,6 +84,18 @@ const completeAssessment = asyncHandler(async (req, res) => {
     });
   }
 
+  // Start extraction in the background
+  enqueueExtraction({
+    assessmentId: assessment.assessmentId,
+    userId: assessment.userId,
+    sessionId: assessment.sessionId,
+    assessmentType: assessment.assessmentType,
+  }).catch((err) => {
+    console.error(
+      `[Feature Extraction] Failed to enqueue ${assessment.assessmentId}:`,
+      err.message
+    );
+  });
   res.json({ assessment, behavioralFeature, deviation });
 });
 
