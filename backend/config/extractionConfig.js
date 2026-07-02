@@ -7,7 +7,7 @@ module.exports = {
 
   // Absolute path to python-worker/main.py
   WORKER_SCRIPT: process.env.FEATURE_EXTRACTION_WORKER_SCRIPT ||
-    path.join(__dirname, "..", "..", "python-worker", "main.py"),
+    path.join(__dirname, "..", "python-worker", "main.py"),
 
   // Where downloaded videos are temporarily stored before/while processing
   TEMP_DIR: process.env.FEATURE_EXTRACTION_TEMP_DIR || "/tmp/abeis-extraction",
