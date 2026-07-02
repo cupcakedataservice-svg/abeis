@@ -9,6 +9,7 @@ const AssessmentResponse = require("../models/AssessmentResponse");
 const Media = require("../models/Media");
 const Baseline = require("../models/Baseline");
 const Consent = require("../models/Consent");
+const ExtractedBehaviorFeature = require("../models/ExtractedBehaviorFeature");
 const {
   cleanupMediaForFilter,
   buildWarningMessage,
@@ -151,34 +152,61 @@ const exportDataset = asyncHandler(async (req, res) => {
 
   const assessments = await Assessment.find(assessmentFilter).sort({ startedAt: -1 }).lean();
 
+  // One combined record per assessment, joined across users, behavioralfeatures,
+  // media, and ExtractedBehaviorFeatures on assessmentId (and userId for the user doc).
+  // Any missing related document degrades gracefully to null rather than
+  // failing the whole export.
   const rows = await Promise.all(
     assessments.map(async (a) => {
-      const [user, feature, media] = await Promise.all([
+      const [user, feature, media, extracted] = await Promise.all([
         User.findOne({ userId: a.userId }).lean(),
         BehavioralFeature.findOne({ assessmentId: a.assessmentId }).lean(),
         Media.findOne({ assessmentId: a.assessmentId }).lean(),
+        ExtractedBehaviorFeature.findOne({ assessmentId: a.assessmentId }).lean(),
       ]);
+
+      const videoFeatures = extracted
+        ? {
+          webcam: extracted.webcamFeatures || null,
+          screen: extracted.screenFeatures || null,
+        }
+        : null;
+
       return {
         userId: a.userId,
         name: user ? user.name : "",
         email: user ? user.email : "",
+
         assessmentId: a.assessmentId,
         sessionId: a.sessionId,
         assessmentType: a.assessmentType,
+
         status: a.status,
+
         startedAt: a.startedAt,
         endedAt: a.endedAt,
         durationSeconds: a.duration,
+
         cameraRecordingUrl: media?.cameraRecording?.url || "",
         screenRecordingUrl: media?.screenRecording?.url || "",
-        featureVectorJSON: feature ? JSON.stringify(feature.featureVector) : "",
+
+        behavioralFeatures: feature ? feature.featureVector : null,
+        videoFeatures,
       };
     })
   );
 
   if (format === "csv") {
+    // CSV is inherently flat, so nested objects (behavioralFeatures, videoFeatures)
+    // are serialized to JSON strings for that format only. The JSON export below
+    // keeps them as real nested objects, per the unified-dataset requirement.
+    const csvRows = rows.map((r) => ({
+      ...r,
+      behavioralFeatures: r.behavioralFeatures ? JSON.stringify(r.behavioralFeatures) : "",
+      videoFeatures: r.videoFeatures ? JSON.stringify(r.videoFeatures) : "",
+    }));
     const parser = new Parser();
-    const csv = parser.parse(rows);
+    const csv = parser.parse(csvRows);
     res.header("Content-Type", "text/csv");
     res.attachment(`abeis_dataset_${Date.now()}.csv`);
     return res.send(csv);
