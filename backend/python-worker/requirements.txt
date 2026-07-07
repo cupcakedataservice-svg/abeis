@@ -1,3 +1,9 @@
 opencv-python-headless==4.10.0.84
+# Pinned exactly: mediapipe >= ~0.10.2x removed the legacy `mp.solutions`
+# API (Face Mesh, Face Detection) this pipeline depends on, in favor of the
+# newer Tasks API. Confirmed during v2 testing that mediapipe==0.10.33
+# raises `AttributeError: module 'mediapipe' has no attribute 'solutions'`.
+# Do not relax this pin without porting webcam_features.py to the Tasks API.
 mediapipe==0.10.14
 numpy==1.26.4
+
