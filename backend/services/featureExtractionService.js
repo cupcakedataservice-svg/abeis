@@ -746,6 +746,22 @@ async function _processAssessment(ctx, opts = {}) {
     cleanupFile(screenPath);
   }
 }
+async function enqueueForceReprocess(ctx) {
+  const { assessmentId } = ctx;
+
+  await _ensurePendingRecord(ctx);
+
+  const doc = await jobQueue.enqueue(
+    () => _processAssessment(ctx, {
+      mergeWithExisting: false
+    }),
+    {
+      label: `force:${assessmentId}`
+    }
+  );
+
+  return doc;
+}
 
 function _stripDiagnostics(featureObj) {
   if (!featureObj) return featureObj;
@@ -753,4 +769,4 @@ function _stripDiagnostics(featureObj) {
   return rest;
 }
 
-module.exports = { enqueueExtraction, enqueueAndWait, enqueueIncrementalUpgrade };
+module.exports = { enqueueExtraction, enqueueAndWait, enqueueIncrementalUpgrade, enqueueForceReprocess };

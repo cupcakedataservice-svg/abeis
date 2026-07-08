@@ -227,7 +227,7 @@ const SCREEN_FIELDS = [
 
 // v3: adds the face-position/gaze webcam features (see WEBCAM_FIELDS above).
 // No screen fields were added in this upgrade.
-const CURRENT_MODEL_VERSION = "v3.0";
+const CURRENT_MODEL_VERSION = "v3.1";
 
 /**
  * True if `obj` is missing any canonical key (undefined — `null` counts as

@@ -7,7 +7,8 @@
   "scripts": {
     "start": "node server.js",
     "dev": "nodemon server.js",
-    "backfill":"node scripts/backfillExtraction.js"
+    "backfill":"node scripts/backfillExtraction.js",
+    "reprocess": "node scripts/reprocessCorrectedFeatures.js"
   },
   "dependencies": {
     "cloudinary": "^2.10.0",
