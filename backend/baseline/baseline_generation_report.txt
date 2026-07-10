@@ -1,0 +1,19 @@
+======================================================================
+ABEIS Coding Baseline Generation Report
+======================================================================
+Generated At          : 2026-07-10T19:08:34.213917+00:00
+Total Users           : 12
+Processed Users       : 11
+Skipped Users         : 1
+Min Calibration Sessions Required : 2
+Number of Behavioral Features     : 105
+Storage Mode          : mongodb
+Execution Time (sec)  : 2.468
+Output Location       : MongoDB collection 'behavioral_baselines'
+
+Warnings (1):
+  - User '7e08639a-4d15-4d8c-8f70-d96439e8fbab' has only 1 'Coding' session(s); minimum required is 2. Skipping.
+
+Errors (0):
+  (none)
+======================================================================
