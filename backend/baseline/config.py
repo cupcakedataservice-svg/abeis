@@ -188,9 +188,19 @@ STORE_MODE: str = "both"
 # so this module never needs a hardcoded credential.
 import os  # noqa: E402  (kept local to this section intentionally)
 
-MONGODB_URI = (
-    "mongodb+srv://dograprem38:Dogra%402005@cluster0.u31hio2.mongodb.net/abeis"
-)
+from pathlib import Path
+from dotenv import load_dotenv
+import os
+
+BASE_DIR = Path(__file__).resolve().parent.parent   # backend/
+ENV_PATH = BASE_DIR / ".env"
+
+load_dotenv(dotenv_path=ENV_PATH)
+
+MONGODB_URI = os.getenv("MONGODB_URI")
+
+if not MONGODB_URI:
+    raise RuntimeError("MONGODB_URI not found in backend/.env")
 MONGODB_COLLECTION_NAME: str = "behavioral_baselines"
 
 # Mongo operation timeout (ms) — fail fast rather than hang the whole run if

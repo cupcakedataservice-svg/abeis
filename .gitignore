@@ -73,3 +73,15 @@ backend/python-worker/tmp/
 # ── Python Tooling ────────────────────────────────────────────────────────────
 .pytest_cache/
 .mypy_cache/
+
+# Baseline generated files
+backend/baseline/generated/
+
+# Baseline reports and logs
+backend/baseline/baseline_generation.log
+backend/baseline/filtered_dataset.csv
+backend/baseline/baseline_generation_report.txt
+
+# Optional: local datasets
+backend/baseline/*.csv
+!backend/baseline/sample_dataset.csv
