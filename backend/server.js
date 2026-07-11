@@ -21,9 +21,22 @@ connectDB();
 const app = express();
 
 app.use(helmet());
+const allowedOrigins = [
+  "http://localhost:5173",
+  "https://abeis.vercel.app",
+];
+
 app.use(
   cors({
-    origin: process.env.FRONTEND_URL || "*",
+    origin(origin, callback) {
+      if (!origin) return callback(null, true);
+
+      if (allowedOrigins.includes(origin)) {
+        return callback(null, true);
+      }
+
+      callback(new Error("Not allowed by CORS"));
+    },
     credentials: true,
   })
 );

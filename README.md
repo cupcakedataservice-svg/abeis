@@ -4376,3 +4376,184 @@ or because the trade-offs need a product decision, not just a bug fix:
    it worse.
 4. **`head_pose.py` is unaudited** (see §5) — send it if you'd like it
    reviewed.
+
+## Changes for Live Coding Test
+
+# ABEIS — Coding Assessment Question Update
+
+This document describes a single, narrowly-scoped change made to the ABEIS
+platform: the content of the coding assessment questions. Nothing else in
+the project was modified.
+
+## What was changed
+
+**Files changed:**
+
+1. `frontend/src/pages/CodingAssessmentPage.jsx` — question content and
+   stage structure (full file provided alongside this README).
+2. `backend/models/AssessmentResponse.js` — one small, necessary fix (full
+   file provided alongside this README). See "Why the model needed a
+   change" below for exactly what and why.
+
+**No other file was changed.** No controller, route, other model,
+API endpoint, behavioral feature extraction module, or baseline
+generation module was touched.
+
+### Why the model needed a change
+
+`AssessmentResponse.codingResponses[].questionNumber` was defined as
+`{ type: Number, enum: [1, 2] }` — a hard validation constraint left over
+from the old two-question flow (`1` = independent problem, `2` =
+transcription task). The new assessment submits three responses per
+attempt (`questionNumber` 1, 2, and 3). Submitting `questionNumber: 3`
+against an `enum: [1, 2]` field fails Mongoose validation on any code
+path that runs validators (a direct `.save()`, or `findOneAndUpdate` with
+`runValidators: true`) — silently corrupting or outright rejecting every
+coding-assessment submission going forward.
+
+This was not optional to leave alone: it is the one place where the
+question-content change and the database schema were actually coupled,
+because the schema encoded an assumption ("there are exactly 2 coding
+questions, with these two fixed meanings") that the new content set
+breaks. The fix removes the enum restriction (`questionNumber` is now a
+plain `Number`) and updates the stale comments. `providedSolution` and
+`matchesProvidedSolution` — fields specific to the old transcription
+task — were left in the schema, unset and unused by new submissions, so
+that historical documents which do have them keep validating and
+exporting exactly as before. Nothing else in the model changed: field
+names, MCQ/typing sub-schemas, indexes, and collection name are all
+untouched.
+
+The three hardcoded coding problems previously shown during the coding
+assessment have been replaced with the following three questions:
+
+1. **Sum of Odd Numbers** — return the sum of all odd numbers in an
+   array/list of integers.
+2. **Find the Smallest Element** — return the smallest element in an
+   array/list.
+3. **Count Uppercase Characters** — return the total number of uppercase
+   alphabetic characters in a string.
+
+None of the three problem statements name a specific programming
+language. A language selector (C++, Java, Python, JavaScript, C, Other)
+was added so the participant can freely choose their language; their
+choice is recorded per response in the existing `language` field that
+`AssessmentResponse.codingResponses[]` already supports.
+
+## One structural note (read before deploying)
+
+The previous version of this page had a **two-stage** flow:
+
+- Stage 1: an independent problem to solve from scratch.
+- Stage 2: a **transcription task** — a JavaScript code block was shown
+  on screen and the participant had to type it out exactly.
+
+The transcription stage displayed a specific language's syntax directly
+in the problem UI, which conflicts with the requirement that the
+assessment content be language-independent. None of the three replacement
+questions is a "copy this exact solution" task — all three are
+independent problems, matching the shape of the first stage's questions,
+not the second.
+
+To keep this change as small as possible while still satisfying the
+language-independence requirement, the two-stage (independent +
+transcription) flow was converted into a **three-stage flow of three
+independent problems**, and the JavaScript transcription task was
+removed. This was the minimum change needed to accommodate the three new
+questions without leaving a language-specific transcription screen in
+place that contradicts the stated requirement. No other part of the
+assessment flow, timer behavior, or submission logic was altered as part
+of this — only the number of stages (2 → 3) needed to change to fit the
+three questions, and the content of what's shown at each stage.
+
+If you specifically want a transcription-style task retained (in
+addition to or instead of one of the three independent problems), let me
+know and I can add a fourth, language-independent transcription problem
+rather than removing that assessment type outright — I did not do this
+unprompted since it wasn't part of your three supplied questions.
+
+## Why these questions were chosen
+
+The three replacement questions were selected because they:
+
+- Have a difficulty level comparable to the questions they replace
+  (each solvable with a single loop/aggregation over an array or string).
+- Require similar logical thinking (iterate, filter/compare, accumulate).
+- Require similar typing effort and similar quantities of code, so
+  keystroke-timing and typing-rhythm signals stay comparable to prior
+  baseline data.
+- Produce similar mouse interaction patterns (minimal mouse use beyond
+  focusing the textarea and scrolling), keeping mouse-based behavioral
+  signals comparable.
+- Produce similar correction/backspace behavior — none of the three
+  requires unusual edge-case handling that would provoke atypical amounts
+  of backtracking compared to the previous questions.
+- Avoid simple memorization, since a participant cannot recall a stored
+  answer from a prior session if the specific problem changes each time
+  while remaining structurally and cognitively equivalent.
+
+## Why language-independent questions were selected
+
+The platform already allows participants to answer in any supported
+language (C++, Java, Python, JavaScript, C, or other). Naming a specific
+language in the problem statement would either bias participants toward
+that language or create a mismatch between the stated problem and the
+language they actually use. Writing the problems in language-neutral
+terms ("a given array or list", "a given string") keeps the assessment
+fair and consistent regardless of which language a participant picks.
+
+## Why similar difficulty matters for behavioral authentication
+
+The system's authentication approach depends on comparing a participant's
+live behavioral signals (typing rhythm, mouse movement, correction
+patterns, timing) against their previously-established statistical
+baseline. If a new question is meaningfully harder or easier than the
+baseline questions, natural behavioral variation (more hesitation, more
+corrections, different timing) would be driven by task difficulty rather
+than by whether the same person is typing — this would corrupt the
+Weighted Z-Score comparison with noise unrelated to identity. Keeping
+difficulty, logical complexity, and typing effort comparable to the
+original calibration questions ensures behavioral deviations measured
+during authentication reflect genuine behavioral differences, not just
+a harder or easier problem.
+
+## Confirmation of scope
+
+- **No architectural changes were made.** The overall flow (calibration →
+  behavioral feature collection → baseline generation → authentication →
+  Weighted Z-Score comparison) is unchanged.
+- **The baseline generation module (`backend/services/baselineService.js`)
+  is unchanged.** It reads whatever feature vector is submitted; it has no
+  dependency on the text of the coding questions.
+- **The authentication workflow is unchanged.** `assessmentController.js`,
+  `featureExtractionService.js`, `exportService.js`, and all MongoDB
+  models and collections are unchanged.
+- **No API routes or request/response shapes were changed.**
+  `POST /api/responses` and `POST /api/assessments/:id/complete` accept
+  exactly the same payload shapes as before.
+- **One MongoDB schema constraint was corrected, not redesigned:** the
+  `questionNumber` field on `AssessmentResponse.codingResponses[]` had a
+  hardcoded `enum: [1, 2]` tied to the old two-question flow. This was
+  loosened to a plain `Number` so a third question doesn't fail
+  validation. No fields were renamed or removed, no other sub-schema
+  (MCQ, typing) was touched, and no collection, index, or endpoint
+  changed as a result.
+- **Only the coding assessment's question content, the stage count
+  (2 → 3), and this one schema constraint were updated.** Question
+  timers, assessment duration limits, mouse/keyboard/session tracking,
+  video/webcam recording, feature extraction, and all other parts of
+  response storage and MongoDB collections remain exactly as they were.
+
+## Expected result after this change
+
+- The coding assessment now displays the three new questions listed above,
+  one per stage, in order.
+- Participants can select any supported programming language before
+  answering; their choice is stored per response.
+- Mouse, keyboard, and session behavioral tracking continue to run exactly
+  as before, unchanged.
+- Webcam and screen recording, and the AI feature-extraction pipeline,
+  continue to run exactly as before, unchanged.
+- Baseline generation and the future Weighted Z-Score authentication
+  module continue to work without any changes, since they consume the same
+  `featureVector` / `codingResponses[]` shapes as before.
