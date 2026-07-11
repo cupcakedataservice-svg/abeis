@@ -4557,3 +4557,109 @@ a harder or easier problem.
 - Baseline generation and the future Weighted Z-Score authentication
   module continue to work without any changes, since they consume the same
   `featureVector` / `codingResponses[]` shapes as before.
+
+New Changes:
+
+# ABEIS — Video Upload & Assessment Submission Reliability Fix
+
+## Root Cause: Problem 1 (webcam upload failure, ~60s hang)
+
+`backend/config/cloudinary.js` never set an explicit `timeout` in
+`cloudinary.config()`. The Cloudinary Node SDK defaults this value to
+**60000ms** — matching the reported "waits ~1 minute, then Submission
+Failed" symptom exactly. This was compounded by the use of
+`cloudinary.uploader.upload_stream()`, a single, unchunked multipart
+request — Cloudinary explicitly documents `upload_large_stream()` as the
+correct method for video/large files, because a monolithic request has to
+finish entirely inside one timeout window. Webcam recordings in this
+system reliably take slightly longer to transfer than the screen
+recording, so webcam was the one consistently getting cut off while
+screen usually finished in time.
+
+This was **not** a MediaRecorder, blob, multipart field name, or async/await
+bug — every part of that pipeline was already correct. The defect was
+purely in the Cloudinary upload configuration/method.
+
+**Fix:**
+
+- `cloudinary.config()` now sets `timeout: 5 * 60 * 1000` (5 minutes).
+- `uploadToStorage()` now uses `cloudinary.uploader.upload_large_stream()`
+  with a 6MB `chunk_size`, Cloudinary's documented mechanism for video.
+
+## Root Cause: Problem 2 (duplicate screen uploads)
+
+Two compounding bugs:
+
+1. `useMediaRecording.js` uploaded both recordings **concurrently** via
+   `Promise.all`. A single failure rejected the whole batch; since chunk
+   buffers were never cleared, a retry re-uploaded _both_ blobs — including
+   whichever one had already succeeded on Cloudinary.
+2. All three assessment pages called `POST /assessments/:id/complete`
+   **before** `stopAndUpload()`. This meant the assessment was marked
+   `"completed"` (and a `BehavioralFeature` document created, and the
+   baseline updated) on the very first attempt — before any video had
+   uploaded. If webcam then failed, a retry would call `/complete` a
+   _second_ time, silently creating a duplicate `BehavioralFeature` record
+   and double-counting that assessment in the running baseline average.
+
+**Fix:**
+
+- `useMediaRecording.js` now uploads **sequentially** (screen, then
+  webcam — matching the required flow order) and caches each recording's
+  successful result in-memory per assessment. Calling `stopAndUpload`
+  again after a partial failure only retries the recording(s) that
+  actually failed; anything already confirmed uploaded is never re-sent.
+- All three assessment pages now call `stopAndUpload()` **before**
+  `/complete`. If upload fails, `/complete` is never called at all, so a
+  retry can only ever complete the assessment once.
+- `mediaController.js` adds a server-side idempotency guard: if a `Media`
+  document already has a stored `fileId`/`url` for the requested
+  `recordingType`, the endpoint returns that existing record immediately
+  without calling Cloudinary again. This is defense-in-depth against
+  double-clicks, multiple tabs, or any client state loss — duplicate
+  uploads are now prevented at the source of truth (the database), not
+  only by client-side tracking.
+
+## How duplicate uploads are prevented (summary)
+
+Two independent layers, either of which alone would prevent it:
+
+1. **Client-side:** `useMediaRecording`'s per-recording success cache never
+   re-sends a blob whose upload already succeeded.
+2. **Server-side:** `mediaController.uploadRecording` checks the existing
+   `Media` document first and short-circuits if that recording type is
+   already stored.
+
+## How webcam upload reliability was improved (summary)
+
+- Cloudinary's Node SDK request timeout was raised from its 60s default to
+  5 minutes.
+- Switched from `upload_stream` (single monolithic request) to
+  `upload_large_stream` (chunked upload) — Cloudinary's documented
+  approach for video.
+- Added blob emptiness validation on both client (before sending) and
+  server (before calling Cloudinary), so a genuinely empty/corrupted blob
+  fails fast with a clear error instead of being silently sent.
+- Axios upload requests now carry an explicit 5-minute timeout, matching
+  the Cloudinary-side timeout, so the frontend and backend agree on how
+  long a legitimate upload is allowed to take.
+
+## Why this is backward compatible
+
+- **No API contract changes.** `POST /api/media/upload` and
+  `POST /api/assessments/:id/complete` accept and return the same shapes
+  as before. The only addition is an optional `alreadyUploaded: boolean`
+  field in the upload response — purely additive, safe for any existing
+  caller to ignore.
+- **No MongoDB schema changes.** `Media`'s existing `cameraRecording` /
+  `screenRecording` sub-documents already carry everything needed to
+  detect "has this been uploaded" — no new field was required.
+- **No changes to architecture outside the upload path.** Authentication,
+  baseline generation, behavioral feature extraction, the admin panel, and
+  assessment question/response logic are all untouched.
+- **The workflow order is preserved conceptually** — stop recorders → stop
+  screen → stop webcam → upload screen → store URL → upload webcam →
+  store URL → complete assessment — it was previously implemented with
+  "complete" out of order relative to upload; this fix corrects the
+  sequencing to match the architecture's own intended design, it doesn't
+  redesign it.

@@ -152,11 +152,11 @@ export default function McqAssessmentPage() {
         },
       };
 
-      await api.post(`/assessments/${assessment.assessmentId}/complete`, {
-        featureVector,
-        rawEvents: { mouseEvents: mouse.getRawEvents().positionsSample },
-      });
-
+      // Upload media BEFORE marking the assessment complete. If upload
+      // fails, the assessment is never marked completed, so a retry only
+      // needs to retry the upload (handled idempotently inside
+      // useMediaRecording) — it never creates a duplicate completion or a
+      // duplicate BehavioralFeature/baseline update.
       if (mediaHandle) {
         await mediaHandle.stopAndUpload({
           assessmentId: assessment.assessmentId,
@@ -165,6 +165,11 @@ export default function McqAssessmentPage() {
           assessmentType: "mcq",
         });
       }
+
+      await api.post(`/assessments/${assessment.assessmentId}/complete`, {
+        featureVector,
+        rawEvents: { mouseEvents: mouse.getRawEvents().positionsSample },
+      });
 
       navigate("/complete", { state: { assessmentType: "mcq" } });
     } catch (err) {

@@ -386,10 +386,6 @@ export default function CodingAssessmentPage() {
         },
       };
 
-      await api.post(`/assessments/${assessment.assessmentId}/complete`, {
-        featureVector,
-      });
-
       if (mediaHandle) {
         await mediaHandle.stopAndUpload({
           assessmentId: assessment.assessmentId,
@@ -398,6 +394,10 @@ export default function CodingAssessmentPage() {
           assessmentType: "coding",
         });
       }
+
+      await api.post(`/assessments/${assessment.assessmentId}/complete`, {
+        featureVector,
+      });
 
       navigate("/complete", { state: { assessmentType: "coding" } });
     } catch (err) {

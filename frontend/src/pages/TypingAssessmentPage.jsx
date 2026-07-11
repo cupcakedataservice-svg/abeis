@@ -151,10 +151,6 @@ export default function TypingAssessmentPage() {
         },
       };
 
-      await api.post(`/assessments/${assessment.assessmentId}/complete`, {
-        featureVector,
-      });
-
       if (mediaHandle) {
         await mediaHandle.stopAndUpload({
           assessmentId: assessment.assessmentId,
@@ -163,6 +159,10 @@ export default function TypingAssessmentPage() {
           assessmentType: "typing",
         });
       }
+
+      await api.post(`/assessments/${assessment.assessmentId}/complete`, {
+        featureVector,
+      });
 
       navigate("/complete", { state: { assessmentType: "typing" } });
     } catch (err) {
